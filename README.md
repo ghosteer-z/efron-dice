@@ -1,4 +1,4 @@
-# 巴菲特骰子 - Efron's Dice
+# 巴菲特骰子
 
 直接玩：https://ghosteer-z.github.io/efron-dice/
 
