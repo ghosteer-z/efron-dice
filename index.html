@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>巴菲特骰子 - Efron's Dice</title>
+<title>巴菲特骰子</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: linear-gradient(135deg, #1a1a2e, #16213e); min-height: 100vh; padding: 20px; color: #eee; }
@@ -30,9 +30,6 @@ button:hover { transform: translateY(-1px); opacity: 0.9; }
 .btn-reset { background: #475569; color: white; }
 .btn-stop { background: #ef4444; color: white; }
 .btn-stop:disabled { opacity: 0.3; cursor: not-allowed; }
-.advantage { margin-top: 10px; padding: 10px; border-radius: 8px; font-size: 0.9em; }
-.advantage-good { background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.3); color: #4ade80; }
-.advantage-bad { background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); color: #f87171; }
 .score-bar { display: flex; height: 30px; border-radius: 8px; overflow: hidden; margin-bottom: 15px; }
 .score-first { background: #8b5cf6; display: flex; align-items: center; justify-content: center; font-size: 0.8em; font-weight: 600; transition: width 0.3s; min-width: 0; }
 .score-tie { background: #64748b; display: flex; align-items: center; justify-content: center; font-size: 0.8em; font-weight: 600; transition: width 0.3s; min-width: 0; }
@@ -56,8 +53,8 @@ button:hover { transform: translateY(-1px); opacity: 0.9; }
 </head>
 <body>
 <div class="container">
-<h1>🎲 巴菲特骰子 · Efron's Dice</h1>
-<p class="subtitle">后手稳赢 · 非传递性骰子 · 每对克制胜率精确 2/3</p>
+<h1>🎲 巴菲特骰子</h1>
+<p class="subtitle">四色骰子 · 一掷比大小 · 点数大者胜</p>
 
 <div class="dice-row">
 <div class="die-card die-red"><div>🔴 红骰子</div><div class="faces">[4, 4, 4, 4, 0, 0]</div><div class="mean">均值 2.67 · 方差 1.89</div></div>
@@ -83,7 +80,6 @@ button:hover { transform: translateY(-1px); opacity: 0.9; }
 <option value="yellow">🟡 黄</option>
 </select>
 </div>
-<div class="advantage" id="advantageTip"></div>
 </div>
 
 <div class="score-numbers">
@@ -112,7 +108,7 @@ button:hover { transform: translateY(-1px); opacity: 0.9; }
 </div>
 
 <div class="history-panel" id="history"></div>
-<p class="tip">克制链：🔴红 → 🔵蓝 → 🟢绿 → 🟡黄 → 🔴红（后手永远选克制对方的骰子，胜率 2/3）<br>连续投掷 100 次约 1.8 秒逐局模拟，可随时中断。</p>
+<p class="tip">连续投掷 100 次约 1.8 秒逐局模拟，可随时中断。</p>
 </div>
 
 <script>
@@ -123,73 +119,37 @@ const DICE = {
     yellow: [5,5,5,1,1,1]
 };
 
-// 克制关系：key克value，胜率2/3
-const BEATS = {
-    red: 'blue',     // 红克蓝
-    blue: 'green',   // 蓝克绿
-    green: 'yellow', // 绿克黄
-    yellow: 'red'    // 黄克红
-};
-
 let scores = { first: 0, second: 0, tie: 0 };
 let historyList = [];
 let rolling = false;
 let stopFlag = false;
 
-function getAdvantage() {
-    const first = document.getElementById('firstSelect').value;
-    const second = document.getElementById('secondSelect').value;
-    const tip = document.getElementById('advantageTip');
-    
-    if (first === second) {
-        tip.className = 'advantage advantage-bad';
-        tip.innerHTML = '⚠️ 双方选了同一颗骰子，胜率 50:50';
-        return;
-    }
-    
-    if (BEATS[second] === first) {
-        // 后手选对了
-        tip.className = 'advantage advantage-good';
-        tip.innerHTML = `✅ 后手选对了！${getColorName(second)} 克 ${getColorName(first)}，理论胜率 <strong>66.7%</strong>`;
-    } else if (BEATS[first] === second) {
-        tip.className = 'advantage advantage-bad';
-        tip.innerHTML = `❌ 后手选反了！${getColorName(first)} 克 ${getColorName(second)}，先手胜率 <strong>66.7%</strong>。应改选 <strong>${getColorName(BEATS[first])}</strong>`;
-    } else {
-        tip.className = 'advantage advantage-bad';
-        tip.innerHTML = `⚠️ 非直接克制关系，请检查选择`;
-    }
-}
-
 function getColorName(c) { return {red:'🔴红',blue:'🔵蓝',green:'🟢绿',yellow:'🟡黄'}[c]; }
-
-document.getElementById('firstSelect').addEventListener('change', getAdvantage);
-document.getElementById('secondSelect').addEventListener('change', getAdvantage);
-getAdvantage();
 
 function rollOnce() {
     if (rolling) return;
     const firstColor = document.getElementById('firstSelect').value;
     const secondColor = document.getElementById('secondSelect').value;
-    
+
     const firstRoll = DICE[firstColor][Math.floor(Math.random() * 6)];
     const secondRoll = DICE[secondColor][Math.floor(Math.random() * 6)];
-    
+
     const fv = document.getElementById('firstValue');
     const sv = document.getElementById('secondValue');
     fv.classList.add('rolling');
     sv.classList.add('rolling');
-    
+
     setTimeout(() => {
         fv.textContent = firstRoll;
         sv.textContent = secondRoll;
         fv.classList.remove('rolling');
         sv.classList.remove('rolling');
-        
+
         let result;
         if (firstRoll > secondRoll) { scores.first++; result = 'first'; }
         else if (secondRoll > firstRoll) { scores.second++; result = 'second'; }
         else { scores.tie++; result = 'tie'; }
-        
+
         addHistory(firstColor, secondColor, firstRoll, secondRoll, result);
         updateScore();
     }, 300);
@@ -200,32 +160,32 @@ async function rollMulti(n) {
     rolling = true;
     stopFlag = false;
     document.getElementById('stopBtn').disabled = false;
-    
+
     for (let i = 0; i < n; i++) {
         if (stopFlag) break;
         const firstColor = document.getElementById('firstSelect').value;
         const secondColor = document.getElementById('secondSelect').value;
-        
+
         const firstRoll = DICE[firstColor][Math.floor(Math.random() * 6)];
         const secondRoll = DICE[secondColor][Math.floor(Math.random() * 6)];
-        
+
         document.getElementById('firstValue').textContent = firstRoll;
         document.getElementById('secondValue').textContent = secondRoll;
-        
+
         let result;
         if (firstRoll > secondRoll) { scores.first++; result = 'first'; }
         else if (secondRoll > firstRoll) { scores.second++; result = 'second'; }
         else { scores.tie++; result = 'tie'; }
-        
+
         addHistory(firstColor, secondColor, firstRoll, secondRoll, result);
         updateScore();
-        
+
         // 每10次更新一次显示，避免太频繁
         if (i % 5 === 0 || i === n - 1) {
             await new Promise(r => setTimeout(r, 18));
         }
     }
-    
+
     rolling = false;
     document.getElementById('stopBtn').disabled = true;
 }
@@ -260,11 +220,11 @@ function updateScore() {
     document.getElementById('scoreSecond').textContent = `后手胜: ${scores.second}`;
     document.getElementById('scoreTie').textContent = `平局: ${scores.tie}`;
     document.getElementById('totalRounds').textContent = `总局数: ${total}`;
-    
+
     const barFirst = document.getElementById('barFirst');
     const barSecond = document.getElementById('barSecond');
     const barTie = document.getElementById('barTie');
-    
+
     if (total > 0) {
         barFirst.style.width = (scores.first / total * 100) + '%';
         barSecond.style.width = (scores.second / total * 100) + '%';
